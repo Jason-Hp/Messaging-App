@@ -1,0 +1,3 @@
+DATABASE_URL = <postgresql_URL>
+SECRET = <Your_Secret_For_JWT>
+PORT = <Your_Port>
