@@ -3,6 +3,13 @@ const chatsController = require("../controllers/chatsController")
 
 chatsRouter = Router()
 
-chatsRouter.get()
+chatsRouter.get("/",chatsController.getAllChats)
+chatsRouter.post("/",chatsController.addChat)
+chatsRouter.get("/:chatId",chatsController.getChat)
+chatsRouter.delete("/:chatId",chatsController.deleteChat)
+chatsRouter.get("/:chatId/messages",chatsController.getMessages)
+chatsRouter.post("/:chatId/messages",chatsController.addMessage)
+chatsRouter.delete("/:chatId/messages/:messageId",chatsController.deleteMessage)
+chatsRouter.put("/:chatId/messages/:messageId",chatsController.editMessage)
 
 module.exports = chatsRouter

@@ -11,6 +11,11 @@ async function getAllUsers(req,res,next){
     }
 }
 
+async function getCurrentUser(req,res){
+    const{id,username} = req.user
+    return res.status(200).json({data:{id,username}})
+}
+
 async function getUser(req,res){
     const { username } = req.query;
     if (!username) {
@@ -30,5 +35,6 @@ async function getUser(req,res){
 
 module.exports = {
     getAllUsers: [authenticateJWT,getAllUsers],
-    getUser: [authenticateJWT,getUser]
+    getUser: [authenticateJWT,getUser],
+    getCurrentUser: [authenticateJWT,getCurrentUser]
 }
