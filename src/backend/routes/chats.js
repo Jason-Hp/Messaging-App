@@ -1,7 +1,7 @@
 const { Router } = require("express")
 const chatsController = require("../controllers/chatsController")
 
-chatsRouter = Router()
+const chatsRouter = Router()
 
 chatsRouter.get("/",chatsController.getAllChats)
 chatsRouter.post("/",chatsController.addChat)

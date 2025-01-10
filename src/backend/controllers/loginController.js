@@ -27,7 +27,8 @@ async function loginController(req, res, next) {
                 //DO INCLUDE sameSite: "None"  if front and backend hosted on different sites
                 res.cookie("token", token, {
                     httpOnly: true,     
-                    secure: false, 
+                    secure: false,
+                    sameSite: "None", 
                     maxAge: 360000000   // 100 hours
                 });
   

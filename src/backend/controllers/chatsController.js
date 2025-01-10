@@ -5,7 +5,7 @@ async function getAllChats(req, res) {
     const { id, username } = req.user;
 
     try {
-        const { rows } = await pool.query("SELECT * FROM chats WHERE (userId1 = $1 OR userId2 = $1)", [id]);
+        const { rows } = await pool.query("SELECT * FROM chats WHERE (userId1 = $1 OR userId2 = $1) ORDER BY date ASC", [id]);
         if(!rows[0]){
             return res.status(404).json({message:"No chat found"})
         }
@@ -77,29 +77,26 @@ async function deleteChat(req,res){
 
 }
 
-async function getMessages(req,res){
-    const { chatId } = req.params
-    const {id} = req.user
+async function getMessages(req, res) {
+    const { chatId } = req.params;
+    const { id } = req.user;
 
-    try{
-        const {rows} = await pool.query("SELECT * FROM chats WHERE id = $1",[chatId])
-        if(!rows[0]){
-            return res.status(404).json({message:"No chat found"})
+    try {
+        const { rows: chatRows } = await pool.query("SELECT * FROM chats WHERE id = $1", [chatId]);
+        if (!chatRows[0]) {
+            return res.status(404).json({ message: "No chat found" });
         }
-        if(rows[0].userId1 == id || rows[0].userId2 == id){
-            try{
-                const { rows } = await pool.query("SELECT * FROM messages WHERE chatId = $1",[chatId])
-                return res.status(200).json({data:rows})
-            }
-            catch{
+        if (chatRows[0].userId1 === id || chatRows[0].userId2 === id) {
+            try {
+                const { rows: messagesRows } = await pool.query("SELECT * FROM messages WHERE chatId = $1 ORDER BY date DESC",[chatId]);
+                return res.status(200).json({ data: messagesRows });
+            } catch {
                 return res.status(500).json({ message: "Something went wrong retrieving messages" });
             }
+        } else {
+            return res.status(401).json({ message: "You are not authorized!" });
         }
-        else{
-            return res.status(401).json({message:"You are not authorized!"})
-        }
-    }
-    catch{
+    } catch {
         return res.status(500).json({ message: "Something went wrong with our database" });
     }
 }
@@ -117,7 +114,8 @@ async function addMessage(req,res){
         }
         if(rows[0].userId1 == id || rows[0].userId2 == id){
             try{
-                await pool.query("INSERT INTO messages (message,chatId,userId) VAULES ($1,$2,$3)",[message,chatId,id])
+                await pool.query("UPDATE chats SET date = NOW() WHERE id=$1",[chatId])
+                await pool.query("INSERT INTO messages (message,chatId,userId) VALUES ($1,$2,$3)",[message,chatId,id])
                 return res.status(201).json({message:"Message sent"})
             }
             catch{
@@ -154,23 +152,26 @@ async function deleteMessage(req,res){
     }
 }
 
-async function editMessage(req,res){
-    const { messageId } = req.params
-    const {id} = req.user
-    const { edit } = req.body
+async function editMessage(req, res) {
+    const { messageId } = req.params;
+    const { id } = req.user;
+    const { edit } = req.body;
 
-    try{
-        const { rows } = await pool.query("SELECT * FROM messages WHERE id = $1",[messageId])
-        if(!rows[0]){
-            return res.status(404).json({message:"Message not found"})
-        }
-        if (rows[0].userId != id){
-            return res.status(401).json({message:"You are not authorized!"})
-        }
-        await pool.query("UPDATE messages SET message = $2 WHERE id = $1",[messageId, edit]);
-        return res.status(200).json({message:"Message edited"})
+    if (!edit) {
+        return res.status(400).json({ message: "Message edit content is required" });
     }
-    catch{
+
+    try {
+        const { rows } = await pool.query("SELECT * FROM messages WHERE id = $1", [messageId]);
+        if (!rows[0]) {
+            return res.status(404).json({ message: "Message not found" });
+        }
+        if (rows[0].userId != id) {
+            return res.status(401).json({ message: "You are not authorized!" });
+        }
+        await pool.query("UPDATE messages SET message = $1 WHERE id = $2", [edit, messageId]); 
+        return res.status(200).json({ message: "Message edited" });
+    } catch {
         return res.status(500).json({ message: "Something went wrong with our database" });
     }
 }

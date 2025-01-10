@@ -16,20 +16,21 @@ async function getCurrentUser(req,res){
     return res.status(200).json({data:{id,username}})
 }
 
-async function getUser(req,res){
+async function getUser(req, res) {
     const { username } = req.query;
+
     if (!username) {
         return res.status(400).json({ message: "Username query parameter is required" });
-      }
-    try{
-        const { rows } = pool.query("SELECT * FROM users WHERE username ILIKE $1",[`%${username}%`])
-        if(!rows[0]){
-            return res.status(404).json({message: "No users found"})
-        }
-        return res.status(200).json({ data:rows})
     }
-    catch{
-        return res.status(500).json({message:"Something went wrong with our database!"})
+
+    try {
+        const { rows } = await pool.query("SELECT * FROM users WHERE username ILIKE $1", [`%${username}%`]); // Add await
+        if (!rows[0]) {
+            return res.status(404).json({ message: "No users found" });
+        }
+        return res.status(200).json({ data: rows });
+    } catch {
+        return res.status(500).json({ message: "Something went wrong with our database!" });
     }
 }
 
