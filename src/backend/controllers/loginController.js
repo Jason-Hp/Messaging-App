@@ -21,7 +21,8 @@ async function loginController(req, res, next) {
             }
 
             if (Match) {
-                const token = jwt.sign({ username }, process.env.SECRET, { expiresIn: "100h" });
+
+                const token = jwt.sign({ user }, process.env.SECRET, { expiresIn: "100h" });
 
                 //DO INCLUDE sameSite: "None"  if front and backend hosted on different sites
                 res.cookie("token", token, {
