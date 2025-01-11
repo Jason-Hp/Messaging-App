@@ -11,7 +11,7 @@ app = express();
 
 //When your frontend and backend are hosted on different sites
 const corsOptions = {
-    origin: 'https://frontend.com', 
+    origin: 'http://localhost:5000', 
     credentials: true,  
   };
 app.use(cors(corsOptions));
