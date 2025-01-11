@@ -19,7 +19,7 @@ async function registerController(req,res,next){
        const { rows } = await pool.query("SELECT * FROM users WHERE username = $1",[username])
        const user = rows[0]
        if(user){
-        return res.status(401).json({message:"Username ALREADY in use!"})
+        return res.status(409).json({message:"Username ALREADY in use!"})
        }else{
         const hashedPassword = await bcrypt.hash(password, 10)
         await pool.query("INSERT INTO users (username,password) VALUES ($1, $2)",[username,hashedPassword])
