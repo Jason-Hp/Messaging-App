@@ -1,10 +1,9 @@
 const express = require("express")
 const cors = require('cors');
 const apiRouter = require("./routes/apiRouter")
-const apicache = require('apicache')
 const cookieParser = require("cookie-parser");
 require('dotenv').config()
-let cache = apicache.middleware;
+
 
 
 app = express();
@@ -18,7 +17,7 @@ app.use(cors(corsOptions));
   
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
-app.use(cache('10 minutes'))
+
 app.use(cookieParser())
 
 app.use("/api",apiRouter)
