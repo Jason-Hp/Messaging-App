@@ -10,14 +10,12 @@ let cache = apicache.middleware;
 app = express();
 
 //When your frontend and backend are hosted on different sites
-/*const corsOptions = {
-    origin: 'https://frontend.com', <-------- Change to your frontend site
+const corsOptions = {
+    origin: 'https://frontend.com', 
     credentials: true,  
   };
+app.use(cors(corsOptions));
   
-  app.use(cors(corsOptions));*/
-  
-app.use(cors()); //Replace this is if the above is true
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(cache('10 minutes'))
