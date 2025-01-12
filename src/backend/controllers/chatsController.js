@@ -1,5 +1,7 @@
 const pool = require("../db/pool");
 const authenticateJWT = require("./authentication/authenticateJWT")
+const upload = require("../fileSystemMulter/upload")
+
 
 async function getAllChats(req, res) {
     const { id, username } = req.user;
@@ -115,6 +117,12 @@ async function addMessage(req,res){
     const { chatId } = req.params
     const {id} = req.user
     const {message} = req.body
+    const file = req.file
+    let filePath = null
+    if(file){
+        //CHANGE THIS WHEN HOSTING ON ACTUAL SITE (E.G. USE AWS S3 BUCKETS)
+        filePath = `files/${file.filename}`
+    }
 
     try{
         const {rows} = await pool.query("SELECT * FROM chats WHERE id = $1",[chatId])
@@ -123,10 +131,10 @@ async function addMessage(req,res){
         }
         if(rows[0].userid1 == id || rows[0].userid2 == id){
             try{
-                await pool.query("INSERT INTO messages (message, chatid, userid) VALUES ($1, $2, $3)", [message, chatId, id]);
+                await pool.query("INSERT INTO messages (message, chatid, userid,file) VALUES ($1, $2, $3, $4)", [message, chatId, id, filePath]);
                 await pool.query("UPDATE chats SET date = NOW() WHERE id=$1", [chatId]);
 
-                return res.status(201).json({message:"Message sent"})
+                return res.status(201).json({filePath:filePath})
             }
             catch{
                 return res.status(500).json({ message: "Something went wrong with sending message" });
@@ -192,7 +200,7 @@ module.exports = {
     getChat:[authenticateJWT,getChat],
     deleteChat:[authenticateJWT,deleteChat],
     getMessages:[authenticateJWT,getMessages],
-    addMessage:[authenticateJWT,addMessage],
+    addMessage:[authenticateJWT,upload.single("file"),addMessage],
     deleteMessage:[authenticateJWT,deleteMessage],
     editMessage:[authenticateJWT,editMessage]
 }

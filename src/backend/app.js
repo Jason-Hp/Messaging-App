@@ -3,34 +3,40 @@ const cors = require('cors');
 const apiRouter = require("./routes/apiRouter");
 const cookieParser = require("cookie-parser");
 const { Server } = require('socket.io');
+const path = require('path')
 require('dotenv').config();
 
 const app = express();
 
-// CORS configuration
+
 const corsOptions = {
-  origin: 'http://localhost:5000',  // Frontend URL
-  credentials: true,  // Allow credentials (cookies, headers, etc.)
+  origin: 'http://localhost:5000',  //Your Frontend URL
+  credentials: true,  
 };
 
 
-// Apply CORS to Express routes as well
+
 app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// API routes
+app.use('/files', express.static(path.join(__dirname, './files')));
 app.use("/api", apiRouter);
 
-// Start the server
+
 const expressServer = app.listen(process.env.PORT, () => {
   console.log("Listening on port " + process.env.PORT);
 });
 
+//For some reason, my socket keeps disconnecting
 const io = new Server(expressServer,{
-  cors:corsOptions
+  cors:corsOptions,
+  reconnection: true,
+  reconnectionAttempts: 5, 
+  reconnectionDelay: 1000, 
+  reconnectionDelayMax: 5000 
 })
 
 io.on('connection', (socket) => {
