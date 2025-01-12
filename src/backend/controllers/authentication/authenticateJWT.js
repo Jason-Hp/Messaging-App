@@ -6,7 +6,9 @@ const authenticateJWT = (req, res, next) => {
     if (!token) {
         return res.status(403).json({ message: "You are not authenticated!" }); 
     }
+
     jwt.verify(token, process.env.SECRET, (err, user) => {
+
       if (err) {
         return res.status(403).json({ message: "Something went wrong with authentication" }); 
       }

@@ -8,7 +8,7 @@ async function registerController(req,res,next){
 
     
       const { username, password, Cpassword} = req.body
-      console.log(password,Cpassword)
+
       if(password.length<8){
         return res.status(400).json({message:"Password should be more than 8 characters!"})
       } 

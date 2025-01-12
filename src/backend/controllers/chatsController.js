@@ -5,7 +5,7 @@ async function getAllChats(req, res) {
     const { id, username } = req.user;
 
     try {
-        const { rows } = await pool.query("SELECT * FROM chats WHERE (userId1 = $1 OR userId2 = $1) ORDER BY date ASC", [id]);
+        const { rows } = await pool.query("SELECT * FROM chats WHERE (userid1 = $1 OR userid2 = $1) ORDER BY date DESC", [id]);
         if(!rows[0]){
             return res.status(404).json({message:"No chat found"})
         }
@@ -23,7 +23,15 @@ async function addChat(req,res){
         return res.status(400).json({message:"Please INCLUDE title AND user to message"})
     }
     try{
-        await pool.query("INSERT INTO chats (title,userId1,userId2) VALUES ($1,$2,$3)",[title,id,contactId])
+        if(id === contactId){
+            return res.status(400).json({message:"Why would you chat with yourself?"})
+        }
+        const {rows} = await pool.query("SELECT * FROM chats WHERE (userid1 = $1 AND userid2 = $2) OR (userid1 = $2 AND userid2 = $1)",[id,contactId])
+        if(rows.length>0){
+            return res.status(400).json({message:"Chat with this user already exists!"})
+        }
+
+        await pool.query("INSERT INTO chats (title,userid1,userid2) VALUES ($1,$2,$3)",[title,id,contactId])
         return res.status(201).json({message:"Chat created!"})
     }
     catch{
@@ -41,7 +49,7 @@ async function getChat(req,res){
         if(!rows[0]){
             return res.status(404).json({message:"No chat found"})
         }
-        if(rows[0].userId1 == id || rows[0].userId2 == id){
+        if(rows[0].userid1 == id || rows[0].userid2 == id){
             return res.status(200).json({data:rows[0]})
         }
         else{
@@ -63,7 +71,7 @@ async function deleteChat(req,res){
         if(!rows[0]){
             return res.status(404).json({message:"No chat found"})
         }
-        if(rows[0].userId1 == id){
+        if(rows[0].userid1 == id){
             await pool.query("DELETE FROM chats WHERE id = $1",[chatId])
             res.status(200).json({message:"Chat deleted"})
         }
@@ -82,14 +90,15 @@ async function getMessages(req, res) {
     const { id } = req.user;
 
     try {
-        const { rows: chatRows } = await pool.query("SELECT * FROM chats WHERE id = $1", [chatId]);
-        if (!chatRows[0]) {
+        const { rows } = await pool.query("SELECT * FROM chats WHERE id = $1", [chatId]);
+        if (!rows[0]) {
             return res.status(404).json({ message: "No chat found" });
         }
-        if (chatRows[0].userId1 === id || chatRows[0].userId2 === id) {
+ 
+        if (rows[0].userid1 === id || rows[0].userid2 === id) {
             try {
-                const { rows: messagesRows } = await pool.query("SELECT * FROM messages WHERE chatId = $1 ORDER BY date DESC",[chatId]);
-                return res.status(200).json({ data: messagesRows });
+                const { rows } = await pool.query("SELECT * FROM messages WHERE chatid = $1 ORDER BY date ASC",[chatId]);
+                return res.status(200).json({ data: rows, user:id });
             } catch {
                 return res.status(500).json({ message: "Something went wrong retrieving messages" });
             }
@@ -112,10 +121,11 @@ async function addMessage(req,res){
         if(!rows[0]){
             return res.status(404).json({message:"No chat found"})
         }
-        if(rows[0].userId1 == id || rows[0].userId2 == id){
+        if(rows[0].userid1 == id || rows[0].userid2 == id){
             try{
-                await pool.query("UPDATE chats SET date = NOW() WHERE id=$1",[chatId])
-                await pool.query("INSERT INTO messages (message,chatId,userId) VALUES ($1,$2,$3)",[message,chatId,id])
+                await pool.query("INSERT INTO messages (message, chatid, userid) VALUES ($1, $2, $3)", [message, chatId, id]);
+                await pool.query("UPDATE chats SET date = NOW() WHERE id=$1", [chatId]);
+
                 return res.status(201).json({message:"Message sent"})
             }
             catch{
@@ -141,7 +151,7 @@ async function deleteMessage(req,res){
         if(!rows[0]){
             return res.status(404).json({message:"Message not found"})
         }
-        if (rows[0].userId != id){
+        if (rows[0].userid != id){
             return res.status(401).json({message:"You are not authorized!"})
         }
         await pool.query("DELETE FROM messages WHERE id = $1",[messageId])
@@ -166,7 +176,7 @@ async function editMessage(req, res) {
         if (!rows[0]) {
             return res.status(404).json({ message: "Message not found" });
         }
-        if (rows[0].userId != id) {
+        if (rows[0].userid != id) {
             return res.status(401).json({ message: "You are not authorized!" });
         }
         await pool.query("UPDATE messages SET message = $1 WHERE id = $2", [edit, messageId]); 

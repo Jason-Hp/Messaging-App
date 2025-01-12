@@ -28,7 +28,6 @@ async function loginController(req, res, next) {
                 res.cookie("token", token, {
                     httpOnly: true,     
                     secure: false,
-                    sameSite: "None", 
                     maxAge: 360000000   // 100 hours
                 });
   
